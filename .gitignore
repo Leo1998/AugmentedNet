@@ -145,10 +145,13 @@ defaults.json
 # Ignore memmap files
 *.mmap
 
+notebooks/**/*.png
+
 rawdata/**/*.wav
 rawdata/**/*.mid
 rawdata/**/*.csv
 rawdata/**/*.musicxml
 rawdata/**/*.tsv
 
-
+dataset
+dataset-synth
