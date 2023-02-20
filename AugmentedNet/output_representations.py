@@ -65,7 +65,10 @@ class OutputRepresentationTI(FeatureRepresentationTI):
     def run(self, transposition="P1"):
         array = np.zeros(self.shape, dtype=self.dtype)
         for frame, dfFeature in enumerate(self.df[self.dfFeature]):
-            rnIndex = self.classList.index(dfFeature)
+            if any(isinstance(val, str) for val in self.classList):
+                rnIndex = self.classList.index(str(dfFeature))
+            else:
+                rnIndex = self.classList.index(dfFeature)
             array[frame] = rnIndex
         return array
 
@@ -112,7 +115,7 @@ class Inversion4(OutputRepresentationTI):
     classList = list(range(4))
     dfFeature = "a_inversion"
 
-    def run(self):
+    def run(self, transposition="P1"):
         array = np.zeros(self.shape, dtype=self.dtype)
         for frame, inversion in enumerate(self.df[self.dfFeature]):
             if inversion > 3:

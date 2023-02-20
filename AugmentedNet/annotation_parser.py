@@ -310,7 +310,7 @@ def _reindexDataFrame(df, fixedOffset=FIXEDOFFSET):
 
 
 def _addOffsetInSeconds(df, tsvSeconds):
-    dfsecs = pd.read_csv(tsvSeconds)
+    dfsecs = pd.read_csv(tsvSeconds, sep="\t")
     dfsecs.set_index("m_offset", inplace=True)
     df["a_offsetInSeconds"] = dfsecs.m_offsetInSeconds.round(FLOATSCALE)
     offset = abs(dfsecs.index.min() - df.index.min())

@@ -2,7 +2,7 @@ from multiprocessing import Pool
 import subprocess
 from AugmentedNet.common import ANNOTATIONSCOREDUPLES
 
-musescore_bin = "/mnt/c/Program Files/MuseScore 3/bin/MuseScore3.exe"
+musescore_bin = "/home/fricke/Musescore-3.2.0-x86_64.AppImage"
 
 def mscore(inout):
     print(inout)

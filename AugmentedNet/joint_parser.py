@@ -8,7 +8,7 @@ import pandas as pd
 from . import annotation_parser
 from . import audio_parser
 from . import score_parser
-from .common import FIXEDOFFSET
+from .common import FIXEDOFFSET, FLOATSCALE
 
 J_COLUMNS = (
     score_parser.S_COLUMNS
@@ -34,7 +34,7 @@ def _measureAlignmentScore(df):
 
 
 def from_tsv(tsv, sep="\t"):
-    df = pd.read_csv(tsv, sep=sep)
+    df = pd.read_csv(tsv, keep_default_na=False, na_values=[], sep=sep)
     df.set_index("j_offset", inplace=True)
     for col in J_LISTTYPE_COLUMNS:
         df[col] = df[col].apply(eval)
@@ -133,12 +133,12 @@ def parseAnnotationAndScore(
 
 
 def parseAnnotationAndAudio(
-    a, s, tsv, fixedOffset=FIXEDOFFSET
+    a, c, tsv, fixedOffset=FIXEDOFFSET
 ):
     """Process a RomanText and audio/chroma files simultaneously.
 
     a is a RomanText file
-    s is a .csv file with audio chromagram data
+    c is a .csv file with audio chromagram data
 
     Create the dataframes of both. Generate a new, joint, one.
     """
@@ -146,9 +146,9 @@ def parseAnnotationAndAudio(
     adf = annotation_parser.parseAnnotation(
         a, fixedOffset=fixedOffset, tsvSeconds=tsv
     )
-    sdf = audio_parser.parseAudio(s, fixedOffset=fixedOffset)
+    cdf = audio_parser.parseAudio(c, fixedOffset=fixedOffset)
     # Create the joint dataframe
-    jointdf = pd.concat([sdf, adf], axis=1)
+    jointdf = pd.concat([cdf, adf], axis=1)
     jointdf.index.name = "j_offset"
     # Sometimes, scores are longer than annotations (trailing empty measures)
     # In that case, ffill the annotation portion of the new dataframe
@@ -161,6 +161,37 @@ def parseAnnotationAndAudio(
     #     jointdf = _inversionMetric(jointdf)
     return jointdf
 
+def parseAnnotationAndAudioAndScore(
+    a, c, s, tsv, fixedOffset=FIXEDOFFSET
+):
+    """Process a RomanText and audio/chroma files simultaneously.
+
+    a is a RomanText file
+    c is a .csv file with audio chromagram data
+    s is a .mxl|.krn|.musicxml file
+
+    Create the dataframes of both. Generate a new, joint, one.
+    """
+    # Parse each file
+    adf = annotation_parser.parseAnnotation(
+        a, fixedOffset=fixedOffset, tsvSeconds=tsv
+    )
+    sdf = score_parser.parseScore(
+        s, fixedOffset=fixedOffset, tsvSeconds=tsv
+    )
+    cdf = audio_parser.parseAudio(c, fixedOffset=fixedOffset)
+    # Create the joint dataframe
+    jointdf = pd.concat([cdf, sdf, adf], axis=1)
+    jointdf.index.name = "j_offset"
+    # Sometimes, scores are longer than annotations (trailing empty measures)
+    # In that case, ffill the annotation portion of the new dataframe
+    jointdf["a_harmonicRhythm"].fillna(6.0, inplace=True)
+    jointdf.dropna(inplace=True)
+    # if qualityAssessment:
+    #     jointdf = _measureAlignmentScore(jointdf)
+    #     jointdf = _qualityMetric(jointdf)
+    #     jointdf = _inversionMetric(jointdf)
+    return jointdf
 
 def parseAnnotationAndAnnotation(
     a, qualityAssessment=True, fixedOffset=FIXEDOFFSET, texturize=True

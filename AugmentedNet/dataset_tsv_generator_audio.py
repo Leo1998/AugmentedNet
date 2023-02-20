@@ -12,10 +12,12 @@ from .common import (
 )
 from .joint_parser import (
     parseAnnotationAndAudio,
+    parseAnnotationAndAudioAndScore,
 )
 
-nnls_postfix = "_vamp_nnls-chroma_nnls-chroma_bothchroma.csv"
-fixedOffset = 0.04643990929705215419501133786848
+nnls_chroma_postfix = "_vamp_nnls-chroma_nnls-chroma_bothchroma.csv"
+nnls_semitone_postfix = "_vamp_nnls-chroma_nnls-chroma_semitonespectrum.csv"
+fixedOffset = 0.04643990929705215419501133786848 # 2048 / 44100
 
 
 def generateDataset(synthesize=False, texturize=False, tsvDir="dataset"):
@@ -34,20 +36,22 @@ def generateDataset(synthesize=False, texturize=False, tsvDir="dataset"):
     for split, files in DATASPLITS.items():
         Path(os.path.join(datasetDir, split)).mkdir(exist_ok=True)
         for nickname in files:
+            #if nickname != "abc-op18-no1-4":
+                #continue
             print(nickname)
-            # if nickname != "abc-op18-no4-2":
-            #     continue
             annotation, score = ANNOTATIONSCOREDUPLES[nickname]
-            miditsv = score.replace(".mxl", ".csv").replace(".krn", ".csv")
-            chromacsv = score.replace(".mxl", nnls_postfix).replace(
-                ".krn", nnls_postfix
+            miditsv = score.replace(".mxl", ".tsv").replace(".krn", ".tsv")
+
+            chromacsv = score.replace(".mxl", nnls_semitone_postfix).replace(
+                ".krn", nnls_semitone_postfix
             )
             try:
-                df = parseAnnotationAndAudio(
-                    annotation, chromacsv, miditsv, fixedOffset=fixedOffset
+                df = parseAnnotationAndAudioAndScore(
+                    annotation, chromacsv, score, miditsv, fixedOffset=fixedOffset
                 )
-            except:
+            except Exception as e:
                 print("\tErrored.")
+                print(e)
                 continue
             outpath = os.path.join(datasetDir, split, nickname + ".tsv")
             df.to_csv(outpath, sep="\t")
@@ -65,7 +69,6 @@ def generateDataset(synthesize=False, texturize=False, tsvDir="dataset"):
             # statsdict["incongruentBassMean"].append(incongruentBass)
             df = pd.DataFrame(statsdict)
             df.to_csv(os.path.join(datasetDir, DATASETSUMMARYFILE), sep="\t")
-    return df
 
 
 if __name__ == "__main__":

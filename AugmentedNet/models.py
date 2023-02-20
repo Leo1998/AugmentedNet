@@ -4,23 +4,35 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
 
+def _initializer():
+    return tf.keras.initializers.VarianceScaling(scale=2.0, mode="fan_avg", distribution="uniform", seed=None)
 
-def AugmentedNet(inputs, outputs, blocks=6):
+def AugmentedNet(inputs, outputs, blocks=6, dropout=0.25):
     """Definition of the AugmentedNet architecture."""
     x = []  # (raw) inputs of the network
     xprime = []  # inputs after initial convolutional blocks
+    y_pitch = [] # the pitch layer outputs
     for i in inputs:
         sequenceLength = i.array.shape[1]
         inputFeatures = i.array.shape[2]
         name = i.name.replace("training_", "")
         xi = layers.Input(shape=(sequenceLength, inputFeatures), name=name)
         x.append(xi)
+        xi = layers.Lambda(lambda x: tf.expand_dims(x, axis=-1))(xi)
+        for i in range(3):
+            xi = layers.Conv2D(64, (7, 5), padding="same", kernel_initializer=_initializer(), kernel_constraint=tf.keras.constraints.UnitNorm(axis=[0, 1, 2]))(xi)
+            xi = layers.BatchNormalization()(xi)
+            xi = layers.Activation("relu")(xi)
+            xi = layers.Dropout(dropout)(xi)
+        xi = layers.Lambda(lambda x: tf.reduce_mean(x, axis=-1), name=name+"_pitch")(xi)
+        y_pitch.append(xi)
         for i in range(blocks):
             filters = 2 ** (blocks - 1 - i)
             kernel = 2 ** i
-            h = layers.Conv1D(filters, kernel, padding="same")(xi)
+            h = layers.Conv1D(filters, kernel, padding="same", kernel_initializer=_initializer(), kernel_constraint=tf.keras.constraints.UnitNorm(axis=[0, 1]))(xi)
             h = layers.BatchNormalization()(h)
             h = layers.Activation("relu")(h)
+            h = layers.Dropout(dropout)(h)
             xi = layers.Concatenate()([xi, h])
         xprime.append(xi)
     if len(x) > 1:
@@ -30,15 +42,21 @@ def AugmentedNet(inputs, outputs, blocks=6):
     h = layers.Dense(64)(inputs)
     h = layers.BatchNormalization()(h)
     h = layers.Activation("relu")(h)
+    h = layers.Dropout(dropout)(h)
     h = layers.Dense(32)(h)
     h = layers.BatchNormalization()(h)
     h = layers.Activation("relu")(h)
+    h = layers.Dropout(dropout)(h)
     h = layers.Bidirectional(layers.GRU(30, return_sequences=True))(h)
     h = layers.BatchNormalization()(h)
+    h = layers.Dropout(dropout)(h)
     h = layers.Bidirectional(layers.GRU(30, return_sequences=True))(h)
     h = layers.BatchNormalization()(h)
+    h = layers.Dropout(dropout)(h)
     y = []
     for output in outputs:
+        if output.shortname in ["Bass19", "Chromagram19"]:
+            continue
         outputFeatures = output.outputFeatures
         out = layers.Dense(outputFeatures, name=output.shortname)(h)
         y.append(out)

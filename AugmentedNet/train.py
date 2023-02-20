@@ -12,10 +12,12 @@ import pandas as pd
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import optimizers
+import keras.backend as K
 
 from . import cli
 from . import models
-from .dataset_npz_generator import generateDataset
+#from .dataset_npz_generator import generateDataset
+from .dataset_npz_generator_audio import generateDataset
 from .input_representations import (
     available_representations as availableInputs,
 )
@@ -29,8 +31,8 @@ class InputOutput(object):
     def __init__(self, name, array):
         self.name = name
         self.array = array
-        if "y" in name:
-            self.shortname = name.split("_")[-1]
+        self.shortname = name.split("_")[-1]
+        if "y" in name and self.shortname not in ["Bass19", "Chromagram19"]:
             self.clas = availableOutputs[self.shortname]
             self.outputFeatures = self.clas.classesNumber()
 
@@ -144,6 +146,8 @@ def evaluate(modelHdf5, X_test, y_true):
     features = []
     for y, ypred in zip(y_true, y_preds):
         name = y.name.replace("validation_y_", "")
+        if name in ["Bass19", "Chromagram19"]:
+            continue
         features.append(name)
         dfdict[f"true_{name}"] = []
         dfdict[f"pred_{name}"] = []
@@ -243,6 +247,7 @@ def train(
     lr_schedule = optimizers.schedules.PiecewiseConstantDecay(
         boundaries=lrBoundaries, values=lrValues
     )
+
     model.compile(
         optimizer=optimizers.Adam(learning_rate=lr_schedule),
         loss=keras.losses.SparseCategoricalCrossentropy(from_logits=True),

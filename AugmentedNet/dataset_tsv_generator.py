@@ -34,12 +34,17 @@ def generateDataset(synthesize=False, texturize=False, tsvDir="dataset"):
         for nickname in files:
             print(nickname)
             annotation, score = ANNOTATIONSCOREDUPLES[nickname]
-            if not synthesize:
-                df = parseAnnotationAndScore(annotation, score)
-            else:
-                df = parseAnnotationAndAnnotation(
-                    annotation, texturize=texturize
-                )
+            try:
+                if not synthesize:
+                    df = parseAnnotationAndScore(annotation, score)
+                else:
+                    df = parseAnnotationAndAnnotation(
+                        annotation, texturize=texturize
+                    )
+            except Exception as e:
+                print("\tErrored.")
+                print(e)
+                continue
             outpath = os.path.join(datasetDir, split, nickname + ".tsv")
             df.to_csv(outpath, sep="\t")
             collection = nickname.split("-")[0]

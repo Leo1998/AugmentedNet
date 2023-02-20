@@ -72,7 +72,7 @@ def correctSplit(split, testSetOn):
 def generateDataset(
     synthetic,
     texturizeEachTransposition,
-    dataAugmentation,
+    noTransposition,
     collections,
     testCollections,
     inputRepresentations,
@@ -140,18 +140,21 @@ def generateDataset(
             continue
         print(f"{row.split} -used-as-> {split}", row.file)
         tsvlocation = os.path.join(datasetDir, row.split, f"{row.file}.tsv")
-        df = pd.read_csv(tsvlocation, sep="\t")
+        df = pd.read_csv(tsvlocation, keep_default_na=False, na_values=[], sep="\t")
+        df.set_index("j_offset", inplace=True)
         df["c_basschroma"] = df["c_basschroma"].apply(eval)
         df["c_chroma"] = df["c_chroma"].apply(eval)
         df["a_pitchNames"] = df["a_pitchNames"].apply(eval)
         df["a_pcset"] = df["a_pcset"].apply(eval)
+        df["s_notes"] = df["s_notes"].apply(eval)
+        df["s_intervals"] = df["s_intervals"].apply(eval)
         if scrutinizeData and split == "training":
             df = scrutinize(df)
-        if dataAugmentation and split == "training":
+        if noTransposition or split != "training":
+            transpositions = ["P1"]
+        else:
             transpositions = _getTranspositions(df, transpositionKeys)
             print("\t", transpositions)
-        else:
-            transpositions = ["P1"]
         if synthetic:
             if not texturizeEachTransposition:
                 # once per file
@@ -167,12 +170,14 @@ def generateDataset(
                     column = "c_basschroma"
                 elif inputRepresentation == "Chromagram19":
                     column = "c_chroma"
-                # inputLayer = availableInputs[inputRepresentation](df)
+                else:
+                    continue
                 Xi = np.array(df[column].to_list())
                 semitones = m21IntervalStr(transposition).semitones
                 Xi = np.roll(Xi, semitones, axis=1)
-                Xi = np.pad(Xi, ((0, 0), (7, 0)))
-                Xi = padToSequenceLength(Xi, sequenceLength, value=-1)
+                if Xi.shape[1] == 12:
+                    Xi = np.pad(Xi, ((0, 0), (7, 0)))
+                Xi = padToSequenceLength(Xi, sequenceLength)
                 npzfile = f"{split}_X_{inputRepresentation}"
                 if npzfile not in outputArrays:
                     outputArrays[npzfile] = DynamicArray(
@@ -180,6 +185,18 @@ def generateDataset(
                     )
                 for sequence in Xi:
                     outputArrays[npzfile].update(sequence)
+
+                '''inputLayer = availableInputs[inputRepresentation](df)
+                Xi_target = inputLayer.run(transposition=transposition)
+                Xi_target [:,0:7] = 0.0
+                Xi_target = padToSequenceLength(Xi_target, sequenceLength)
+                npzfile = f"{split}_y_{inputRepresentation}"
+                if npzfile not in outputArrays:
+                    outputArrays[npzfile] = DynamicArray(
+                        shape=Xi_target.shape, dtype="int8", memmap=f".{npzfile}.mmap"
+                    )
+                for sequence in Xi_target:
+                    outputArrays[npzfile].update(sequence)'''
             for outputRepresentation in outputRepresentations:
                 outputLayer = availableOutputs[outputRepresentation](df)
                 yi = outputLayer.run(transposition=transposition)

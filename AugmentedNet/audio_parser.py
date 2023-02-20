@@ -32,21 +32,32 @@ def _initialDataFrameCSV(s):
     for r in rows:
         row = r.strip().split(",")
         t = row[0]
-        basschroma = [float(pc) for pc in row[1:13]]
-        basschroma = basschroma[3:] + basschroma[:3]
-        basschroma = _normalizeChroma(basschroma)
-        chroma = [float(pc) for pc in row[13:]]
-        chroma = chroma[3:] + chroma[:3]
-        chroma = _normalizeChroma(chroma)
+        if len(row) == 25: # bothchroma
+            basschroma = [float(pc) for pc in row[1:13]]
+            basschroma = basschroma[3:] + basschroma[:3]
+            basschroma = _normalizeChromaMax(basschroma)
+            chroma = [float(pc) for pc in row[13:]]
+            chroma = chroma[3:] + chroma[:3]
+            chroma = _normalizeChromaMax(chroma)
+            dfdict["c_basschroma"].append(basschroma)
+            dfdict["c_chroma"].append(chroma)
+        elif len(row) == 85: # semitone spectrum
+            spectrum = [float(pc) for pc in row[1:]]
+            spectrum = _normalizeChromaMax(spectrum)
+            dfdict["c_basschroma"].append(spectrum)
+            dfdict["c_chroma"].append(spectrum)
         dfdict["c_offset"].append(round(float(t), FLOATSCALE))
-        dfdict["c_basschroma"].append(basschroma)
-        dfdict["c_chroma"].append(chroma)
     df = pd.DataFrame(dfdict)
     df.set_index("c_offset", inplace=True)
     return df
 
-def _normalizeChroma(chroma):
-    # chroma = [1.0 if pc > 1.0 else 0.0 for pc in chroma]
+def _normalizeChromaMax(chroma):
+    chromaMax = max(chroma)
+    if chromaMax != 0:
+        chroma = [round(pc / chromaMax, FLOATSCALE) for pc in chroma]
+    return chroma
+
+def _normalizeChromaL1(chroma):
     chromaSum = sum(chroma)
     if chromaSum != 0:
         chroma = [round(pc / chromaSum, FLOATSCALE) for pc in chroma]
@@ -69,7 +80,7 @@ def _initialDataFrameARFF(s, column):
         t = row[-1]
         chroma = [float(pc) for pc in row[0:12]]
         chroma = chroma[3:] + chroma[:3]
-        chroma = _normalizeChroma(chroma)
+        chroma = _normalizeChromaMax(chroma)
         dfdict["c_offset"].append(round(float(t), FLOATSCALE))
         dfdict[column].append(chroma)
     df = pd.DataFrame(dfdict)

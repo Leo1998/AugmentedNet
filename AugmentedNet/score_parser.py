@@ -101,8 +101,8 @@ def _initialDataFrame(s, fmt=None):
         onsets = [(not n.tie or n.tie.type == "start") for n in c]
         dfdict["s_isOnset"].append(onsets)
     df = pd.DataFrame(dfdict)
-    currentLastOffset = float(df.tail(1).s_offset) + float(
-        df.tail(1).s_duration
+    currentLastOffset = float(df.tail(1).s_offset.iloc[0]) + float(
+        df.tail(1).s_duration.iloc[0]
     )
     deltaDuration = _lastOffset(s) - currentLastOffset
     df.loc[len(df) - 1, "s_duration"] += deltaDuration
@@ -126,7 +126,7 @@ def _reindexDataFrame(df, fixedOffset=FIXEDOFFSET):
     lastRow = df.tail(1)
     minOffset = firstRow.index.to_numpy()[0]
     maxOffset = (lastRow.index + lastRow.s_duration).to_numpy()[0]
-    newIndex = np.arange(minOffset, maxOffset, fixedOffset)
+    newIndex = np.arange(minOffset, maxOffset, fixedOffset).round(FLOATSCALE)
     # All operations done over the full index, i.e., fixed-timesteps
     # plus original onsets. Later, original onsets (e.g., triplets)
     # are removed and just the fixed-timesteps are kept
@@ -199,11 +199,28 @@ def _texturizeAnnotationScore(df, duration, numberOfNotes):
     return outputdf
 
 
-def parseScore(f, fmt=None, fixedOffset=FIXEDOFFSET, eventBased=False):
+def _addOffsetInSeconds(df, tsvSeconds):
+    dfsecs = pd.read_csv(tsvSeconds, sep="\t")
+    dfsecs.set_index("m_offset", inplace=True)
+    df["a_offsetInSeconds"] = dfsecs.m_offsetInSeconds.round(FLOATSCALE)
+    offset = abs(dfsecs.index.min() - df.index.min())
+    offset += abs(dfsecs.index.max() - df.index.max())
+    print(f"\t{offset}")
+    if offset > 2.0:
+        raise Exception("Too risky/buggy")
+    df["a_offsetInSeconds"].interpolate(inplace=True)
+    df["a_offset"] = df.index
+    df.set_index("a_offsetInSeconds", inplace=True)
+    return df
+
+def parseScore(f, fmt=None, fixedOffset=FIXEDOFFSET, eventBased=False, tsvSeconds=None):
     # Step 0: Use music21 to parse the score
     s = _m21Parse(f, fmt)
     # Step 1: Parse and produce a salami-sliced dataset
     df = _initialDataFrame(s, fmt)
+    if tsvSeconds:
+        df = _addOffsetInSeconds(df, tsvSeconds)
+        df.dropna(inplace=True)
     # Step 2: Turn salami-slice into fixed-duration steps
     if not eventBased:
         df = _reindexDataFrame(df, fixedOffset=fixedOffset)

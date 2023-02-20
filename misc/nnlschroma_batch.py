@@ -3,8 +3,8 @@ import subprocess
 
 from AugmentedNet.common import ANNOTATIONSCOREDUPLES
 
-sonic_annotator = "/home/napulen/sonic-annotator-1.6-linux64-static/sonic-annotator"
-nnlschroma = "/home/napulen/sonic-annotator-1.6-linux64-static/nnls_bothchroma.n3"
+sonic_annotator = "/home/fricke/sonic-annotator-1.6-linux64-static/sonic-annotator"
+nnlschroma = "/home/fricke/sonic-annotator-1.6-linux64-static/nnls_bothchroma.n3"
 
 def chroma(wav):
     subprocess.run([sonic_annotator, "-t", nnlschroma, wav, "-w", "csv"])
