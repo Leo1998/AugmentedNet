@@ -172,6 +172,7 @@ def generateDataset(
                     column = "c_chroma"
                 else:
                     continue
+
                 Xi = np.array(df[column].to_list())
                 semitones = m21IntervalStr(transposition).semitones
                 Xi = np.roll(Xi, semitones, axis=1)
@@ -188,15 +189,16 @@ def generateDataset(
 
                 '''inputLayer = availableInputs[inputRepresentation](df)
                 Xi_target = inputLayer.run(transposition=transposition)
-                Xi_target [:,0:7] = 0.0
+                Xi_target = Xi_target [:,7:]
                 Xi_target = padToSequenceLength(Xi_target, sequenceLength)
-                npzfile = f"{split}_y_{inputRepresentation}"
+                npzfile = f"{split}_X_{inputRepresentation}_target"
                 if npzfile not in outputArrays:
                     outputArrays[npzfile] = DynamicArray(
-                        shape=Xi_target.shape, dtype="int8", memmap=f".{npzfile}.mmap"
+                        shape=Xi_target.shape, dtype="float32", memmap=f".{npzfile}.mmap"
                     )
                 for sequence in Xi_target:
                     outputArrays[npzfile].update(sequence)'''
+
             for outputRepresentation in outputRepresentations:
                 outputLayer = availableOutputs[outputRepresentation](df)
                 yi = outputLayer.run(transposition=transposition)
