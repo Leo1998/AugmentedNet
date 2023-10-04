@@ -7,7 +7,7 @@ from tensorflow.keras import layers
 def _initializer():
     return tf.keras.initializers.VarianceScaling(scale=2.0, mode="fan_avg", distribution="uniform", seed=None)
 
-def AugmentedNet(inputs, outputs, blocks=6, dropout=0.25):
+def AugmentedNet(inputs, outputs, blocks=6, include_top=True, dropout=0.25):
     """Definition of the AugmentedNet architecture."""
     x = []  # (raw) inputs of the network
     xprime = []  # inputs after initial convolutional blocks
@@ -17,18 +17,25 @@ def AugmentedNet(inputs, outputs, blocks=6, dropout=0.25):
         name = i.name.replace("training_", "")
         xi = layers.Input(shape=(sequenceLength, inputFeatures), name=name)
         x.append(xi)
-        #xi = layers.Lambda(lambda x: tf.expand_dims(x, axis=-1))(xi)
-        xi = layers.Reshape((sequenceLength, 12, 7))(xi)
-        for i in range(3):
-            xi = layers.Conv2D(32, (7, 5), padding="same", kernel_initializer=_initializer(), kernel_constraint=tf.keras.constraints.UnitNorm(axis=[0, 1, 2]))(xi)
-            xi = layers.BatchNormalization()(xi)
-            xi = layers.Activation("relu")(xi)
-            xi = layers.Dropout(dropout)(xi)
-        xi = layers.Reshape((sequenceLength, 12 * 32))(xi)
+        if include_top:
+            channels = 1
+            if inputFeatures == 84: # remap semitone spectrum
+                inputFeatures = 12
+                channels = 7
+            xi = layers.Reshape((sequenceLength, inputFeatures, channels))(xi)
+            last_filters = 0
+            for i in range(3):
+                filters = 2 ** (5 - i)
+                xi = layers.Conv2D(filters, (7, 5), padding="same", kernel_initializer=_initializer(), kernel_constraint=tf.keras.constraints.UnitNorm(axis=[0, 1, 2]))(xi)
+                xi = layers.BatchNormalization()(xi)
+                xi = layers.Activation("relu")(xi)
+                xi = layers.Dropout(dropout)(xi)
+                last_filters = filters
+            xi = layers.Reshape((sequenceLength, inputFeatures * last_filters))(xi)
         for i in range(blocks):
             filters = 2 ** (blocks - 1 - i)
             kernel = 2 ** i
-            h = layers.Conv1D(filters * 2, kernel, padding="same", kernel_initializer=_initializer(), kernel_constraint=tf.keras.constraints.UnitNorm(axis=[0, 1]))(xi)
+            h = layers.Conv1D(filters, kernel, padding="same", kernel_initializer=_initializer(), kernel_constraint=tf.keras.constraints.UnitNorm(axis=[0, 1]))(xi)
             h = layers.BatchNormalization()(h)
             h = layers.Activation("relu")(h)
             h = layers.Dropout(dropout)(h)
@@ -38,18 +45,18 @@ def AugmentedNet(inputs, outputs, blocks=6, dropout=0.25):
         inputs = layers.Concatenate()(xprime)
     else:
         inputs = xprime[0]
-    h = layers.Dense(256)(inputs)
+    h = layers.Dense(64)(inputs)
     h = layers.BatchNormalization()(h)
     h = layers.Activation("relu")(h)
     h = layers.Dropout(dropout)(h)
-    h = layers.Dense(128)(h)
+    h = layers.Dense(32)(h)
     h = layers.BatchNormalization()(h)
     h = layers.Activation("relu")(h)
     h = layers.Dropout(dropout)(h)
-    h = layers.Bidirectional(layers.GRU(60, return_sequences=True))(h)
+    h = layers.Bidirectional(layers.GRU(30, return_sequences=True))(h)
     h = layers.BatchNormalization()(h)
     h = layers.Dropout(dropout)(h)
-    h = layers.Bidirectional(layers.GRU(60, return_sequences=True))(h)
+    h = layers.Bidirectional(layers.GRU(30, return_sequences=True))(h)
     h = layers.BatchNormalization()(h)
     h = layers.Dropout(dropout)(h)
     y = []
