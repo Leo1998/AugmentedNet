@@ -4,6 +4,7 @@ import datetime
 import gc
 from pathlib import Path
 import os
+import shutil
 
 import mlflow
 import mlflow.tensorflow
@@ -358,6 +359,7 @@ def run_experiment(
     summary = {f"results_{k}": v for k, v in summary.items()}
     mlflow.log_metrics(summary)
     mlflow.end_run()
+    shutil.copyfile(modelpath, os.path.join(os.path.dirname(modelpath), "model.hdf5"))
     print(f"The trained model is available in: {modelpath}")
 
 
