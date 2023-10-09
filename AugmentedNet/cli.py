@@ -59,6 +59,7 @@ class DefaultArguments(object):
         "transpositionKeys": TRANSPOSITIONKEYS,
     }
     train = {
+        "mlflow_tracking_uri": None,
         "nogpu": False,
         "useExistingNpz": False,
         "syntheticDataStrategy": None,
@@ -200,6 +201,10 @@ def train():
     )
     parser.add_argument(
         "run_name", type=str, help="A name for this experiment run."
+    )
+    parser.add_argument(
+        "--mlflow_tracking_uri",
+        help="An URI to specify a custom directory for mlflow."
     )
     parser.add_argument(
         "--batchsize",

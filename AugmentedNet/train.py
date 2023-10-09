@@ -299,6 +299,7 @@ def train(
 def run_experiment(
     experiment_name,
     run_name,
+    mlflow_tracking_uri,
     useExistingNpz,
     syntheticDataStrategy,
     model,
@@ -316,6 +317,8 @@ def run_experiment(
     else:
         # Ideally, this shouldn't be necessary; but this is not an ideal world
         tensorflowGPUHack()
+    if mlflow_tracking_uri is not None:
+        mlflow.set_tracking_uri(mlflow_tracking_uri)
     mlflow.tensorflow.autolog()
     mlflow.set_experiment(experiment_name)
     mlflow.start_run(run_name=run_name)
@@ -359,8 +362,9 @@ def run_experiment(
     summary = {f"results_{k}": v for k, v in summary.items()}
     mlflow.log_metrics(summary)
     mlflow.end_run()
-    shutil.copyfile(modelpath, os.path.join(os.path.dirname(modelpath), "model.hdf5"))
-    print(f"The trained model is available in: {modelpath}")
+    finalpath = os.path.join(os.path.dirname(modelpath), "model.hdf5")
+    shutil.copyfile(modelpath, finalpath)
+    print(f"The trained model is available in: {finalpath}")
 
 
 if __name__ == "__main__":
