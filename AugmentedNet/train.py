@@ -300,6 +300,7 @@ def run_experiment(
     experiment_name,
     run_name,
     mlflow_tracking_uri,
+    log_path,
     useExistingNpz,
     syntheticDataStrategy,
     model,
@@ -325,7 +326,7 @@ def run_experiment(
     for k, v in kwargs.items():
         mlflow.log_param(f"custom_{k}", v)
     timestamp = datetime.datetime.now().strftime("%y%m%dT%H%M%S")
-    checkpoint = f".model_checkpoint/{experiment_name}/{run_name}-{timestamp}/"
+    checkpoint = f"{log_path}/.model_checkpoint/{experiment_name}/{run_name}-{timestamp}/"
     npzNoExt, _ = os.path.splitext(kwargs["npzOutput"])
     if not useExistingNpz or not os.path.isfile(f"{npzNoExt}.npz"):
         kwargs["synthetic"] = False

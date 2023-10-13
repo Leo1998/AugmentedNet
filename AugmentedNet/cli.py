@@ -60,6 +60,7 @@ class DefaultArguments(object):
     }
     train = {
         "mlflow_tracking_uri": None,
+        "log_path": "./",
         "nogpu": False,
         "useExistingNpz": False,
         "syntheticDataStrategy": None,
@@ -205,6 +206,10 @@ def train():
     parser.add_argument(
         "--mlflow_tracking_uri",
         help="An URI to specify a custom directory for mlflow."
+    )
+    parser.add_argument(
+        "--log_path",
+        help="The root path to store model checkpoints and results."
     )
     parser.add_argument(
         "--batchsize",
