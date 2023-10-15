@@ -7,7 +7,7 @@ from tensorflow.keras import layers
 def _initializer():
     return tf.keras.initializers.VarianceScaling(scale=2.0, mode="fan_avg", distribution="uniform", seed=None)
 
-def AugmentedNet(inputs, outputs, blocks=6, include_top=True, dropout=0.25):
+def AugmentedNet(inputs, outputs, blocks=6, include_top=False, dropout=0.0):
     """Definition of the AugmentedNet architecture."""
     x = []  # (raw) inputs of the network
     xprime = []  # inputs after initial convolutional blocks

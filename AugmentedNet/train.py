@@ -222,6 +222,8 @@ def train(
     X_test,
     y_test,
     modelName="AugmentedNet",
+    include_top=False,
+    dropout=0.0,
     checkpointPath=".model_checkpoint/",
     lrBoundaries=[40],
     lrValues=[0.01, 0.0001],
@@ -241,7 +243,7 @@ def train(
                     layer.trainable = False
                 print(layer.name, layer.trainable)
     else:
-        model = models.available_models[modelName](X_train, y_train)
+        model = models.available_models[modelName](X_train, y_train, include_top=include_top, dropout=dropout)
 
     stepsPerEpoch = X_train[0].array.shape[0] // batchsize
     lrBoundaries = [x * stepsPerEpoch for x in lrBoundaries]

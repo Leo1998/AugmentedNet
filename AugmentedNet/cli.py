@@ -64,6 +64,8 @@ class DefaultArguments(object):
         "nogpu": False,
         "useExistingNpz": False,
         "syntheticDataStrategy": None,
+        "include_top": False,
+        "dropout": 0.0,
         "model": "AugmentedNet",
         "lr_boundaries": [40],
         "lr_values": [0.001, 0.001],
@@ -237,6 +239,16 @@ def train():
         nargs="+",
         type=float,
         help="The piecewise learning rate values for different boundaries.",
+    )
+    parser.add_argument(
+        "--include_top",
+        action="store_true",
+        help="Includes additional 2d convolution layers at the top of the network.",
+    )
+    parser.add_argument(
+        "--dropout",
+        type=float,
+        help="The rate of the dropout layers of the network.",
     )
     parser.add_argument(
         "--model",
