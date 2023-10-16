@@ -291,6 +291,7 @@ def train(
                 monitor="val_y_monitored_loss",
                 mode="auto",
             ),
+            keras.callbacks.EarlyStopping(monitor='val_loss', patience=5)
         ],
     )
 
@@ -306,6 +307,8 @@ def run_experiment(
     useExistingNpz,
     syntheticDataStrategy,
     model,
+    include_top,
+    dropout,
     lr_boundaries,
     lr_values,
     nogpu,
@@ -350,6 +353,8 @@ def run_experiment(
         X_test,
         y_test,
         modelName=model,
+        include_top=include_top,
+        dropout=dropout,
         checkpointPath=checkpoint,
         lrBoundaries=lr_boundaries,
         lrValues=lr_values,
