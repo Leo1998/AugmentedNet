@@ -66,6 +66,7 @@ class DefaultArguments(object):
         "syntheticDataStrategy": None,
         "include_top": False,
         "dropout": 0.0,
+        "size_multiplier": 1,
         "model": "AugmentedNet",
         "lr_boundaries": [40],
         "lr_values": [0.001, 0.001],
@@ -249,6 +250,11 @@ def train():
         "--dropout",
         type=float,
         help="The rate of the dropout layers of the network.",
+    )
+    parser.add_argument(
+        "--size_multiplier",
+        type=int,
+        help="This makes the Dense and GRU layers of the model bigger.",
     )
     parser.add_argument(
         "--model",

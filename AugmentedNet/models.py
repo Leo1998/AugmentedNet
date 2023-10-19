@@ -7,7 +7,7 @@ from tensorflow.keras import layers
 def _initializer():
     return tf.keras.initializers.VarianceScaling(scale=2.0, mode="fan_avg", distribution="uniform", seed=None)
 
-def AugmentedNet(inputs, outputs, blocks=6, include_top=False, dropout=0.0):
+def AugmentedNet(inputs, outputs, blocks=6, include_top=False, dropout=0.0, size_multiplier=1):
     """Definition of the AugmentedNet architecture."""
     x = []  # (raw) inputs of the network
     xprime = []  # inputs after initial convolutional blocks
@@ -45,18 +45,18 @@ def AugmentedNet(inputs, outputs, blocks=6, include_top=False, dropout=0.0):
         inputs = layers.Concatenate()(xprime)
     else:
         inputs = xprime[0]
-    h = layers.Dense(64)(inputs)
+    h = layers.Dense(64 * size_multiplier)(inputs)
     h = layers.BatchNormalization()(h)
     h = layers.Activation("relu")(h)
     h = layers.Dropout(dropout)(h)
-    h = layers.Dense(32)(h)
+    h = layers.Dense(32 * size_multiplier)(h)
     h = layers.BatchNormalization()(h)
     h = layers.Activation("relu")(h)
     h = layers.Dropout(dropout)(h)
-    h = layers.Bidirectional(layers.GRU(30, return_sequences=True))(h)
+    h = layers.Bidirectional(layers.GRU(30 * size_multiplier, return_sequences=True))(h)
     h = layers.BatchNormalization()(h)
     h = layers.Dropout(dropout)(h)
-    h = layers.Bidirectional(layers.GRU(30, return_sequences=True))(h)
+    h = layers.Bidirectional(layers.GRU(30 * size_multiplier, return_sequences=True))(h)
     h = layers.BatchNormalization()(h)
     h = layers.Dropout(dropout)(h)
     y = []

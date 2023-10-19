@@ -191,7 +191,7 @@ def generateDataset(
                 Xi_target = inputLayer.run(transposition=transposition)
                 Xi_target = Xi_target [:,7:]
                 Xi_target = padToSequenceLength(Xi_target, sequenceLength)
-                npzfile = f"{split}_X_{inputRepresentation}_target"
+                npzfile = f"{split}_X_{inputRepresentation}"
                 if npzfile not in outputArrays:
                     outputArrays[npzfile] = DynamicArray(
                         shape=Xi_target.shape, dtype="float32", memmap=f".{npzfile}.mmap"
