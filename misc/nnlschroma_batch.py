@@ -1,19 +1,23 @@
-from multiprocessing import Pool
-import subprocess
+#!/usr/bin/env python3
 
-from AugmentedNet.common import ANNOTATIONSCOREDUPLES
+from multiprocessing import Pool
+import os
+import subprocess
 
 sonic_annotator = "/home/fricke/sonic-annotator-1.6-linux64-static/sonic-annotator"
 nnlschroma = "/home/fricke/sonic-annotator-1.6-linux64-static/nnls_bothchroma.n3"
+nnlssemitone = "/home/fricke/sonic-annotator-1.6-linux64-static/nnls_semitonespectrum.n3"
 
 def chroma(wav):
-    subprocess.run([sonic_annotator, "-t", nnlschroma, wav, "-w", "csv"])
+    transform = nnlssemitone
+    subprocess.run([sonic_annotator, "-t", transform, wav, "-w", "csv"])
 
 if __name__ == "__main__":
-    files = []
-    for nick, (a, s) in ANNOTATIONSCOREDUPLES.items():
-        wav = s.replace(".mxl", ".wav").replace(".krn", ".wav")
-        files.append(wav)
-
-    with Pool(6) as p:
-        p.map(chroma, files)
+    audio_files = []
+    for (root, dirs, files) in os.walk("audio"):
+        for name in files:
+            if name.endswith(".flac") or name.endswith(".wav"):
+                audio_files.append(os.path.join(root, name))
+                
+    with Pool(8) as p:
+        p.map(chroma, audio_files)

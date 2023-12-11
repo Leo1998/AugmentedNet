@@ -153,5 +153,6 @@ rawdata/**/*.csv
 rawdata/**/*.musicxml
 rawdata/**/*.tsv
 
-dataset
-dataset-synth
+audio
+dataset*
+*.sh
