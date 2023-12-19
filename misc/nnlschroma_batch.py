@@ -5,12 +5,11 @@ import os
 import subprocess
 
 sonic_annotator = "/home/fricke/sonic-annotator-1.6-linux64-static/sonic-annotator"
-nnlschroma = "/home/fricke/sonic-annotator-1.6-linux64-static/nnls_bothchroma.n3"
-nnlssemitone = "/home/fricke/sonic-annotator-1.6-linux64-static/nnls_semitonespectrum.n3"
+transforms = ["misc/nnls_bothchroma.n3", "misc/nnls_semitonespectrum.n3"]
 
 def chroma(wav):
-    transform = nnlssemitone
-    subprocess.run([sonic_annotator, "-t", transform, wav, "-w", "csv"])
+    for transform in transforms:
+        subprocess.run([sonic_annotator, "-t", transform, wav, "-w", "csv"])
 
 if __name__ == "__main__":
     audio_files = []

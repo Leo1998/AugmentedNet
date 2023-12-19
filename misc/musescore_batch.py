@@ -10,7 +10,6 @@ def mscore(inout):
     print(f"Processing file: {inn}")
     env = os.environ.copy()
     env["SKIP_LIBJACK"] = "1"
-    #env["QT_QPA_PLATFORM"] = "offscreen"
     subprocess.run([musescore_bin, inn, "-o", out], env=env)
 
 def check(inout):

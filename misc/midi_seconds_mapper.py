@@ -1,10 +1,6 @@
+import os
 import mido
 import pandas as pd
-
-from AugmentedNet.common import ANNOTATIONSCOREDUPLES
-
-score = "bps_01_01.mid"
-
 
 def get_events_seconds(mid):
     events = {}
@@ -38,11 +34,16 @@ def get_events_quarterLength(mid):
 
 
 if __name__ == "__main__":
-    for nick, (a, s) in ANNOTATIONSCOREDUPLES.items():
-        print(nick)
-        m = s.replace(".mxl", ".mid").replace(".krn", ".mid")
-        out = s.replace(".mxl", ".tsv").replace(".krn", ".tsv")
-        mid = mido.MidiFile(m)
+    midi_files = []
+    for (root, dirs, files) in os.walk("audio"):
+        for name in files:
+            if name.endswith(".mid"):
+                midi_files.append(os.path.join(root, name))
+
+    for midi in midi_files:
+        print(midi)
+        out = midi.replace(".mid", ".tsv")
+        mid = mido.MidiFile(midi)
 
         secs = get_events_seconds(mid)
         qs = get_events_quarterLength(mid)
@@ -54,7 +55,7 @@ if __name__ == "__main__":
             sorted(secs.items()), sorted(qs.items())
         ):
             if notes != notes2:
-                print("\t\tERROR: Note list doest not match!!!")
+                print("\t\tERROR: Note list does not match!!!")
             dfdict["m_offset"].append(q)
             dfdict["m_offsetInSeconds"].append(s)
             dfdict["m_notes"].append(notes)

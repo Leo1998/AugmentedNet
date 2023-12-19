@@ -40,11 +40,10 @@ def generateDataset(synthesize=False, texturize=False, tsvDir="dataset"):
                 #continue
             print(nickname)
             annotation, score = ANNOTATIONSCOREDUPLES[nickname]
-            miditsv = score.replace(".mxl", ".tsv").replace(".krn", ".tsv")
+            miditsv = score.replace("rawdata", "audio").replace(".mxl", ".tsv").replace(".krn", ".tsv").replace(".musicxml", ".tsv")
 
-            chromacsv = score.replace(".mxl", nnls_semitone_postfix).replace(
-                ".krn", nnls_semitone_postfix
-            )
+            postfix = f"_piano{nnls_chroma_postfix}"
+            chromacsv = score.replace("rawdata", "audio").replace(".mxl", postfix).replace(".krn", postfix).replace(".musicxml", postfix)
             try:
                 df = parseAnnotationAndAudioAndScore(
                     annotation, chromacsv, score, miditsv, fixedOffset=fixedOffset
