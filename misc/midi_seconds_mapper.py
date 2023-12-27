@@ -1,35 +1,72 @@
 import os
-import mido
+import pretty_midi
 import pandas as pd
+import numpy as np
 
 def get_events_seconds(mid):
     events = {}
-    t = 0.0
-    for m in mid:
-        t += m.time
-        if m.type == "note_on" and m.velocity > 0:
-            if t not in events:
-                events[t] = []
-            events[t].append(m.note)
+    for instrument in mid.instruments:
+        for note in instrument.notes:
+            if note.velocity > 0:
+                t = note.start
+                if t not in events:
+                    events[t] = []
+                events[t].append(note.pitch)
     return events
 
+def get_quarters(mid, start_time=0.0):
+    tempo_change_times, tempi = mid.get_tempo_changes()
+    quarters = [start_time]
+
+    tempo_idx = 0
+    while (tempo_idx < tempo_change_times.shape[0] - 1 and quarters[-1] > tempo_change_times[tempo_idx + 1]):
+        tempo_idx += 1
+
+    end_time = mid.get_end_time()
+    while quarters[-1] < end_time:
+        tempo = tempi[tempo_idx] # in quarters per minute
+
+        next_quarter = quarters[-1] + 60.0/tempo
+        if (tempo_idx < tempo_change_times.shape[0] - 1 and next_quarter > tempo_change_times[tempo_idx + 1]):
+            next_quarter = quarters[-1]
+            quarter_remaining = 1.0
+            while (tempo_idx < tempo_change_times.shape[0] - 1 and next_quarter + quarter_remaining*60.0/tempo >= tempo_change_times[tempo_idx + 1]):
+                overshot_ratio = (tempo_change_times[tempo_idx + 1] - next_quarter)/(60.0/tempo)
+                next_quarter += overshot_ratio*60.0/tempo
+                quarter_remaining -= overshot_ratio
+                tempo_idx = tempo_idx + 1
+                tempo = tempi[tempo_idx]
+            next_quarter += quarter_remaining*60.0/tempo
+        quarters.append(next_quarter)
+    quarters = np.array(quarters[:-1])
+    return quarters
+
+def find_quarterLength(quarters, time):
+    tempo_change_times, tempi = mid.get_tempo_changes()
+
+    tempo_idx = 0
+    while (tempo_idx < tempo_change_times.shape[0] - 1 and time > tempo_change_times[tempo_idx + 1]):
+        tempo_idx += 1
+    tempo = tempi[tempo_idx] # in quarters per minute
+
+    for i, q in enumerate(quarters):
+        if q > time:
+            return i - ((q - time) / (60.0/tempo))
+    return len(quarters) - 1 - ((quarters[-1] - time) / (60.0/tempo))
 
 def get_events_quarterLength(mid):
     events = {}
-    for track in mid.tracks:
-        t = 0.0
-        for m in track:
-            t += m.time
-            # if m.type != "note_on":
-            #     print(m.is_meta, "\t", m.dict())
-            # else:
-            #     print(m.is_meta, m.dict())
-            quarterLength = t / mid.ticks_per_beat
-            q = round(quarterLength, 3)
-            if m.type == "note_on" and m.velocity > 0:
+
+    quarters = get_quarters(mid)
+    for instrument in mid.instruments:
+        for note in instrument.notes:
+            if note.velocity > 0:
+                t = note.start
+                q = round(find_quarterLength(quarters, t), 3)
+
                 if q not in events:
                     events[q] = []
-                events[q].append(m.note)
+                events[q].append(note.pitch)
     return events
 
 
@@ -43,14 +80,14 @@ if __name__ == "__main__":
     for midi in midi_files:
         print(midi)
         out = midi.replace(".mid", ".tsv")
-        mid = mido.MidiFile(midi)
+        mid = pretty_midi.PrettyMIDI(midi)
 
         secs = get_events_seconds(mid)
         qs = get_events_quarterLength(mid)
 
         dfdict = {"m_offset": [], "m_offsetInSeconds": [], "m_notes": []}
         if len(secs) != len(qs):
-            print("\t\tERROR: Different sequence length!!!")
+            print(f"\t\tERROR: Different sequence length!!! ({len(secs)}, {len(qs)})")
         for (s, notes), (q, notes2) in zip(
             sorted(secs.items()), sorted(qs.items())
         ):

@@ -45,8 +45,8 @@ def generateDataset(synthesize=False, texturize=False, tsvDir="dataset"):
             postfix = f"_piano{nnls_chroma_postfix}"
             chromacsv = score.replace("rawdata", "audio").replace(".mxl", postfix).replace(".krn", postfix).replace(".musicxml", postfix)
             try:
-                df = parseAnnotationAndAudioAndScore(
-                    annotation, chromacsv, score, miditsv, fixedOffset=fixedOffset
+                df = parseAnnotationAndAudio(
+                    annotation, chromacsv, miditsv, fixedOffset=fixedOffset
                 )
             except Exception as e:
                 print("\tErrored.")

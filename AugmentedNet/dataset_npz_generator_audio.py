@@ -146,8 +146,8 @@ def generateDataset(
         df["c_chroma"] = df["c_chroma"].apply(eval)
         df["a_pitchNames"] = df["a_pitchNames"].apply(eval)
         df["a_pcset"] = df["a_pcset"].apply(eval)
-        df["s_notes"] = df["s_notes"].apply(eval)
-        df["s_intervals"] = df["s_intervals"].apply(eval)
+        #df["s_notes"] = df["s_notes"].apply(eval)
+        #df["s_intervals"] = df["s_intervals"].apply(eval)
         if scrutinizeData and split == "training":
             df = scrutinize(df)
         if noTransposition or split != "training":
