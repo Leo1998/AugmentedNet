@@ -34,7 +34,7 @@ def get_quarters(mid, start_time=0.0):
                 overshot_ratio = (tempo_change_times[tempo_idx + 1] - next_quarter)/(60.0/tempo)
                 next_quarter += overshot_ratio*60.0/tempo
                 quarter_remaining -= overshot_ratio
-                tempo_idx = tempo_idx + 1
+                tempo_idx += 1
                 tempo = tempi[tempo_idx]
             next_quarter += quarter_remaining*60.0/tempo
         quarters.append(next_quarter)
@@ -42,17 +42,31 @@ def get_quarters(mid, start_time=0.0):
     return quarters
 
 def find_quarterLength(quarters, time):
+    quarter_idx = len(quarters) - 1
+    for i, q in enumerate(quarters):
+        if q > time:
+            quarter_idx = i - 1
+            break
+    quarter_time = quarters[quarter_idx]
+    
     tempo_change_times, tempi = mid.get_tempo_changes()
-
     tempo_idx = 0
-    while (tempo_idx < tempo_change_times.shape[0] - 1 and time > tempo_change_times[tempo_idx + 1]):
+    while (tempo_idx < tempo_change_times.shape[0] - 1 and quarter_time > tempo_change_times[tempo_idx + 1]):
         tempo_idx += 1
     tempo = tempi[tempo_idx] # in quarters per minute
 
-    for i, q in enumerate(quarters):
-        if q > time:
-            return i - ((q - time) / (60.0/tempo))
-    return len(quarters) - 1 - ((quarters[-1] - time) / (60.0/tempo))
+    quarter_overshoot = 0.0
+    if (tempo_idx < tempo_change_times.shape[0] - 1 and time > tempo_change_times[tempo_idx + 1]): # there is a tempo change within the current quarter
+        while (tempo_idx < tempo_change_times.shape[0] - 1 and time >= tempo_change_times[tempo_idx + 1]):
+            quarter_overshoot += (tempo_change_times[tempo_idx + 1] - quarter_time) / (60.0/tempo)
+            quarter_time = tempo_change_times[tempo_idx + 1]
+            tempo_idx += 1
+            tempo = tempi[tempo_idx]
+        quarter_overshoot += (time - quarter_time) / (60.0/tempo)
+    else:
+        quarter_overshoot = (time - quarter_time) / (60.0/tempo)
+
+    return quarter_idx + quarter_overshoot
 
 def get_events_quarterLength(mid):
     events = {}

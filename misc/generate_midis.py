@@ -1,6 +1,5 @@
 from multiprocessing import Pool
 import os
-import subprocess
 from AugmentedNet.common import ANNOTATIONSCOREDUPLES
 import music21
 
