@@ -319,6 +319,7 @@ def _addOffsetInSeconds(df, tsvSeconds):
     if offset > 2.0:
         raise Exception("Too risky/buggy")
     df["a_offsetInSeconds"].interpolate(inplace=True)
+    df["a_offsetInSeconds"].fillna(value=0.0, inplace=True)
     df["a_offset"] = df.index
     df.set_index("a_offsetInSeconds", inplace=True)
     return df
