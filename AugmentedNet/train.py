@@ -107,7 +107,7 @@ def printTrainingExample(x, y):
 
 def findBestModel(checkpointPath=".model_checkpoint/"):
     models = [f for f in os.listdir(checkpointPath)]
-    accuracies = [f.replace(".hdf5", "").split("-")[-1] for f in models]
+    accuracies = [f.replace(".keras", "").split("-")[-1] for f in models]
     best = accuracies.index(max(accuracies))
     return models[best]
 
@@ -135,8 +135,8 @@ class ModdedModelCheckpoint(keras.callbacks.ModelCheckpoint):
         super().on_epoch_end(epoch, logs=logs)
 
 
-def evaluate(modelHdf5, X_test, y_true):
-    model = keras.models.load_model(modelHdf5)
+def evaluate(modelFile, X_test, y_true):
+    model = keras.models.load_model(modelFile)
     X = [xi.array for xi in X_test]
     padding = np.sum(X[0], axis=2) == -X[0].shape[2]
     padding = padding.reshape(-1, 1)
@@ -206,8 +206,8 @@ def evaluate(modelHdf5, X_test, y_true):
         )
         summary["satbRomanNumeral"] = df.satbRomanNumeral.mean().round(3)
         print(f"satbRomanNumeral: {summary['satbRomanNumeral']}")
-    outputPath = modelHdf5.replace(".model_checkpoint", ".results")
-    outputPath = outputPath.replace(".hdf5", "")
+    outputPath = modelFile.replace(".model_checkpoint", ".results")
+    outputPath = outputPath.replace(".keras", "")
     Path(outputPath).mkdir(parents=True, exist_ok=True)
     df.to_csv(f"{outputPath}/results.csv")
     with open(f"{outputPath}/summary.txt", "w") as fd:
@@ -274,7 +274,7 @@ def train(
         "{epoch:02d}"
         + "-{val_monitored_loss:.3f}"
         + "-{val_monitored_accuracy:.4f}"
-        + ".hdf5"
+        + ".keras"
     )
 
     # Maybe this will force gc on the python lists?
@@ -374,7 +374,7 @@ def run_experiment(
     summary = {f"results_{k}": v for k, v in summary.items()}
     mlflow.log_metrics(summary)
     mlflow.end_run()
-    finalpath = os.path.join(os.path.dirname(modelpath), "model.hdf5")
+    finalpath = os.path.join(os.path.dirname(modelpath), "best_model.keras")
     shutil.copyfile(modelpath, finalpath)
     print(f"The trained model is available in: {finalpath}")
 

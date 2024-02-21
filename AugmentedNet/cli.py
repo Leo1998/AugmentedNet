@@ -76,7 +76,7 @@ class DefaultArguments(object):
         "transferLearningFreeze": False,
     }
     inference = {
-        "modelPath": "AugmentedNet.hdf5",
+        "modelPath": "AugmentedNet.keras",
         "dir": False,
         "useGpu": False,
     }
@@ -292,7 +292,7 @@ def inference():
         help="The path to a MusicXML (or similar) input score to process.",
     )
     parser.add_argument(
-        "--modelPath", help="The path to a trained HDF5 AugmentedNet model."
+        "--modelPath", help="The path to a trained AugmentedNet Keras model."
     )
     parser.add_argument(
         "--dir",
