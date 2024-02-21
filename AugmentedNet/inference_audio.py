@@ -161,7 +161,7 @@ def predict(model, inputPath):
     inputs = [l.name.rsplit("_")[1] for l in model.inputs]
     encodingMap = {"Bass19": "c_basschroma", "Chromagram19": "c_chroma"}
     encodedInputs = [np.array(df[encodingMap[i]].to_list()) for i in inputs]
-    encodedInputs = [np.pad(Xi, ((0, 0), (7, 0))) for Xi in encodedInputs]
+    #encodedInputs = [np.pad(Xi, ((0, 0), (7, 0))) for Xi in encodedInputs]
     outputLayers = [l.name.split("/")[0] for l in model.outputs]
     seqlen = model.inputs[0].shape[1]
     modelInputs = [
