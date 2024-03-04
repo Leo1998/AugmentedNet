@@ -9,14 +9,11 @@ def generate(inn, out):
         score = music21.converter.parse(inn, format="musicxml", forceSource=True)
 
         #remove all repeats
-        for r in score.flat.getElementsByClass("RepeatMark"):
+        for r in score.recurse().getElementsByClass("RepeatMark"):
             score.remove(r, recurse=True)
-
-        mf = music21.midi.translate.streamToMidiFile(score)
+        
         os.makedirs(os.path.dirname(out), exist_ok=True)
-        mf.open(out, 'wb')
-        mf.write()
-        mf.close()
+        score.write("midi", fp=out)
     except Exception as e:
         print(e)
 
