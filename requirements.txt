@@ -1,7 +1,6 @@
-tensorflow
-keras
+keras==2.14.0
 music21==6.7.1
-numpy
-pandas
-mlflow
-mido
+numpy==1.22.4
+pandas==2.1.0
+mlflow==2.12.1
+pretty_midi==0.2.10
