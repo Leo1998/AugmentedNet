@@ -1,7 +1,8 @@
 import os
-import pretty_midi
 import pandas as pd
 import numpy as np
+import pretty_midi
+pretty_midi.pretty_midi.MAX_TICK = 1e10
 
 def get_events_seconds(mid):
     events = {}

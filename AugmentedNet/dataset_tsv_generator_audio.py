@@ -12,7 +12,6 @@ from .common import (
 )
 from .joint_parser import (
     parseAnnotationAndAudio,
-    parseAnnotationAndAudioAndScore,
 )
 
 nnls_chroma_postfix = "_vamp_nnls-chroma_nnls-chroma_bothchroma.csv"

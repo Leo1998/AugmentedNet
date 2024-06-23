@@ -304,7 +304,7 @@ def _reindexDataFrame(df, fixedOffset=FIXEDOFFSET):
     # the harmonic rhythm is postprocessed to reduce class imbalance
     harmRhythm = _harmonicRhythmPostprocessing(df.a_harmonicRhythm)
     df["a_harmonicRhythm"] = harmRhythm
-    df.fillna(method="ffill", inplace=True)
+    df.ffill(inplace=True)
     df = df.reindex(index=newIndex)
     return df
 
@@ -322,6 +322,7 @@ def _addOffsetInSeconds(df, tsvSeconds):
     df["a_offsetInSeconds"].fillna(value=0.0, inplace=True)
     df["a_offset"] = df.index
     df.set_index("a_offsetInSeconds", inplace=True)
+    df = df[~df.index.duplicated(keep="first")]
     return df
 
 
