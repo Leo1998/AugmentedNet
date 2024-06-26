@@ -5,6 +5,7 @@ import gc
 from pathlib import Path
 import os
 import shutil
+import math
 
 import mlflow
 import mlflow.tensorflow
@@ -27,6 +28,18 @@ from .output_representations import (
 )
 from .utils import tensorflowGPUHack, disableGPU
 
+class BatchedSequence(tf.keras.utils.Sequence):
+    def __init__(self, x, y, batch_size):
+        self.x, self.y = x, y
+        self.batch_size = batch_size
+
+    def __len__(self):
+        return math.ceil(len(self.y[0]) / self.batch_size)
+
+    def __getitem__(self, idx):
+        batch_x = [xi[idx * self.batch_size:(idx + 1) * self.batch_size] for xi in self.x]
+        batch_y = [yi[idx * self.batch_size:(idx + 1) * self.batch_size] for yi in self.y]
+        return batch_x, batch_y
 
 class InputOutput(object):
     def __init__(self, name, array):
@@ -280,13 +293,15 @@ def train(
     # Maybe this will force gc on the python lists?
     X_train = y_train = X_test = y_test = []
     gc.collect()
+
+    train_seq = BatchedSequence(x, y, batchsize)
+    val_seq = BatchedSequence(xv, yv, batchsize)
     model.fit(
-        x,
-        y,
+        x=train_seq,
         epochs=epochs,
         shuffle=True,
         batch_size=batchsize,
-        validation_data=(xv, yv),
+        validation_data=val_seq,
         callbacks=[
             ModdedModelCheckpoint(
                 checkpointPath + modelNameSuffix,
